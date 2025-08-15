@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace RayTracer
 {
@@ -85,11 +86,22 @@ namespace RayTracer
         public void Render(Image outputImage, double time = 0)
         {
             // Begin writing your code here...
+            var obj = new Vector3(2, 5, 7);
+            var obj2 = new Vector3(1, 2, 4);
+            double result = obj.LengthSq();
+            Console.WriteLine("Testing LSq:" + result);
+            result = obj.Length();
+            Console.WriteLine("Testing L:" + result);
+            result = obj.Dot(obj2);
+            Console.WriteLine(result.ToString());
+            var newvector = obj.Cross(obj2);
+            Console.WriteLine(newvector.ToString());
+
             for (int i = 0; i < outputImage.Width; i++)
             {
                 for (int j = 0; j < outputImage.Height; j++)
                 {
-                    outputImage.SetPixel(i, j, new Color(255,255,255));
+                    outputImage.SetPixel(i, j, new Color(255, 255, 255));
                 }
             }
         }
