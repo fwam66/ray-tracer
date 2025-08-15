@@ -33,6 +33,15 @@ namespace RayTracer
         public RayHit Intersect(Ray ray)
         {
             // Write your code here...
+            if (ray.Direction.Dot(this.normal) != 0)
+            {
+                double dist = ((center - ray.Origin).Dot(normal)) / (ray.Direction.Dot(this.normal));
+                if (dist >= 0)
+                {
+                    var position = ray.Origin + dist*ray.Direction;
+                    return new RayHit(position, normal, ray.Direction, material);
+                }
+            }
             return null;
         }
 

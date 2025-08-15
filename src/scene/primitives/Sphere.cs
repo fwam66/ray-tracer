@@ -32,7 +32,20 @@ namespace RayTracer
         public RayHit Intersect(Ray ray)
         {
             // Write your code here...
-            return null;
+            var v = ray.Origin - this.center;
+            double discriminant = (2 * ray.Direction.Dot(v)) * (2 * ray.Direction.Dot(v)) - 4 * (v.Dot(v) - Math.Pow(this.radius, 2));
+            // Means no intersection
+            if (discriminant >= 0)
+            {
+                double dist = (-ray.Direction.Dot(v) - Math.Sqrt(discriminant)) / 2;
+                if (dist >= 0)
+                {
+                    var position = ray.Origin + dist * ray.Direction;
+                    var normal = (position - this.center).Normalized();
+                    return new RayHit(position, normal, ray.Direction, material);
+                }
+            }
+            return null;    
         }
 
         /// <summary>

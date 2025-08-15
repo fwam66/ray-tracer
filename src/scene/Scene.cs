@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Reflection.Metadata;
 
 namespace RayTracer
 {
@@ -86,22 +87,40 @@ namespace RayTracer
         public void Render(Image outputImage, double time = 0)
         {
             // Begin writing your code here...
-            var obj = new Vector3(2, 5, 7);
-            var obj2 = new Vector3(1, 2, 4);
-            double result = obj.LengthSq();
-            Console.WriteLine("Testing LSq:" + result);
-            result = obj.Length();
-            Console.WriteLine("Testing L:" + result);
-            result = obj.Dot(obj2);
-            Console.WriteLine(result.ToString());
-            var newvector = obj.Cross(obj2);
-            Console.WriteLine(newvector.ToString());
+            int fov = 60;
+            var origin = new Vector3(0, 0, 0);
+            float aspect = outputImage.Width / outputImage.Height;
+            float scale = MathF.Tan(fov * 0.5f * MathF.PI / 180f);
 
             for (int i = 0; i < outputImage.Width; i++)
             {
                 for (int j = 0; j < outputImage.Height; j++)
                 {
-                    outputImage.SetPixel(i, j, new Color(255, 255, 255));
+                    // Paint image white.
+                    outputImage.SetPixel(i, j, new Color(0,0,0));
+                    // 2D pixel coord to 3D ray
+                    // First, convert 2D coord to range of [-1, 1]
+                    float x_converted = (i + 0.5f) * 2 / outputImage.Width - 1;
+                    float y_converted = 1 - (j + 0.5f) * 2 / outputImage.Height;
+
+                    // Then, calculate x, y, z for direction from origin
+                    float x = x_converted * aspect * scale;
+                    float y = y_converted * scale;
+                    float z = 1;
+
+                    // Create Ray with normalized direction vector
+                    Ray ray = new Ray(origin, new Vector3(x, y, z).Normalized());
+
+                    foreach (var entity in entities)
+                    {
+                        var hit = entity.Intersect(ray);
+                        if (hit != null)
+                        {
+                            outputImage.SetPixel(i, j, entity.Material.DiffuseColor);
+
+                        }
+                    }
+
                 }
             }
         }
