@@ -111,13 +111,15 @@ namespace RayTracer
                     // Create Ray with normalized direction vector
                     Ray ray = new Ray(origin, new Vector3(x, y, z).Normalized());
 
+                    // Checks for closest RaycastHits
+                    RayHit nearestHit = null;
                     foreach (var entity in entities)
                     {
                         var hit = entity.Intersect(ray);
-                        if (hit != null)
+                        if (hit != null && (nearestHit == null || hit.Distance < nearestHit.Distance))
                         {
                             outputImage.SetPixel(i, j, entity.Material.DiffuseColor);
-
+                            nearestHit = hit;
                         }
                     }
 

@@ -39,7 +39,7 @@ namespace RayTracer
                 if (dist >= 0)
                 {
                     var position = ray.Origin + dist*ray.Direction;
-                    return new RayHit(position, normal, ray.Direction, material);
+                    return new RayHit(position, normal, ray.Direction, material, dist);
                 }
             }
             return null;

@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 
 namespace RayTracer
 {
@@ -33,7 +34,35 @@ namespace RayTracer
         public RayHit Intersect(Ray ray)
         {
             // Write your code here...
+            Vector3 e1 = this.v1 - this.v0;
+            Vector3 e2 = this.v2 - this.v0;
+            Vector3 plane = e1.Cross(e2);
+            Vector3 normal = plane.Normalized();
+
+            if (plane.Dot(ray.Direction) != 0) // Not parallel to triangle plane
+            {
+                double dist = (plane.Dot(this.v0 - ray.Origin)) / (plane.Dot(ray.Direction));
+                var position = ray.Origin + dist * ray.Direction;
+
+                // Compute barycentric coordinates
+                double totalArea = ComputeArea(this.v0, this.v1, this.v2, normal);
+                double u = ComputeArea(this.v1, this.v2, position, normal) / totalArea;
+                double v = ComputeArea(this.v2, this.v0, position, normal) / totalArea;
+                double w = ComputeArea(this.v0, this.v1, position, normal) / totalArea;
+
+                if (u >= 0 && v >= 0 && w >= 0 && dist >= 0) // Position P is within the triangle means intersection
+                {
+                    return new RayHit(position, normal, ray.Direction, material, dist);
+                }
+            }
             return null;
+        }
+
+        public double ComputeArea(Vector3 a, Vector3 b, Vector3 c, Vector3 normal) {
+            var eBA = b - a;
+            var eCA = c - a;
+            return 0.5 * eBA.Cross(eCA).Dot(normal);
+            
         }
 
         /// <summary>
