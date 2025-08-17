@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
 using System.Numerics;
 using System.Reflection.Metadata;
+using System.Security.Claims;
 
 namespace RayTracer
 {
@@ -97,7 +100,7 @@ namespace RayTracer
                 for (int j = 0; j < outputImage.Height; j++)
                 {
                     // Paint image white.
-                    outputImage.SetPixel(i, j, new Color(0,0,0));
+                    outputImage.SetPixel(i, j, new Color(0, 0, 0));
                     // 2D pixel coord to 3D ray
                     // First, convert 2D coord to range of [-1, 1]
                     float x_converted = (i + 0.5f) * 2 / outputImage.Width - 1;
@@ -113,18 +116,72 @@ namespace RayTracer
 
                     // Checks for closest RaycastHits
                     RayHit nearestHit = null;
-                    foreach (var entity in entities)
+                    foreach (SceneEntity entity in this.entities)
                     {
-                        var hit = entity.Intersect(ray);
+                        RayHit hit = entity.Intersect(ray);
                         if (hit != null && (nearestHit == null || hit.Distance < nearestHit.Distance))
                         {
-                            outputImage.SetPixel(i, j, entity.Material.DiffuseColor);
                             nearestHit = hit;
                         }
                     }
 
+                    // If hit recorded, calculate diffuse term
+                    Color diffuseTerm = new Color(0, 0, 0);
+                    Color specularTerm = new Color(0, 0, 0);
+                    Color ambientTerm = new Color(0, 0, 0);
+                    Color shadow = new Color(1,1,1);
+                 
+                    if (nearestHit != null)
+                    {
+                        ambientTerm = FindAmbient(nearestHit);
+                        foreach (PointLight light in this.lights)
+                        {
+                            Vector3 hitToLightDirection = (light.Position - nearestHit.Position).Normalized();
+                            Ray shadowRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, hitToLightDirection);
+                            diffuseTerm += FindDiffuse(nearestHit, light);
+                            specularTerm += FindSpecular(nearestHit, light);
+                            foreach (SceneEntity entity in this.entities)
+                            {
+
+                                RayHit shadowHit = entity.Intersect(shadowRay);
+                                if (shadowHit != null)
+                                {
+                                    shadow *= 0;
+                                }
+                            }
+
+                        }
+                    }
+                    Color finalColor = ambientTerm + shadow * (diffuseTerm + specularTerm);
+                    outputImage.SetPixel(i, j, finalColor);
                 }
             }
+        }
+
+        public Color FindDiffuse(RayHit hit, PointLight light)
+        {
+            Color materialDiffuseColor = hit.Material.DiffuseColor;
+            Vector3 normal = hit.Normal;
+            Color lightColor = light.Color;
+            Vector3 lightDirection = (light.Position - hit.Position).Normalized();
+            return materialDiffuseColor * lightColor * Math.Max(0, normal.Dot(lightDirection));
+
+        }
+
+        public Color FindSpecular(RayHit hit, PointLight light)
+        {
+            Color materialSpecularColor = hit.Material.SpecularColor;
+            Vector3 directionToCamera = (-hit.Position).Normalized();
+            double shininess = hit.Material.Shininess;
+            Color lightColor = light.Color;
+            Vector3 lightDirection = (light.Position - hit.Position).Normalized();
+            Vector3 reflection = (2 * hit.Normal.Dot(lightDirection) * hit.Normal - lightDirection).Normalized();
+            return materialSpecularColor * lightColor * Math.Pow(Math.Max(0, reflection.Dot(directionToCamera)), shininess);
+        }
+
+        public Color FindAmbient(RayHit hit)
+        {
+            return hit.Material.AmbientColor + this.ambientLightColor;
         }
     }
 }

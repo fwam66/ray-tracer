@@ -11,6 +11,7 @@ namespace RayTracer
         private Vector3 position;
         private Vector3 normal;
         private Vector3 incident;
+        private Material material;
         private double distance;
 
         public RayHit(Vector3 position, Vector3 normal, Vector3 incident, Material material, double distance)
@@ -19,6 +20,7 @@ namespace RayTracer
             this.normal = normal;
             this.incident = incident;
             this.distance = distance;
+            this.material = material;
         }
 
         // You may wish to write methods to compute other vectors, 
@@ -30,6 +32,8 @@ namespace RayTracer
 
         public Vector3 Incident { get { return this.incident; } }
 
-        public double Distance { get { return this.distance; }}
+        public double Distance { get { return this.distance; } }
+        
+        public Material Material { get { return this.material; } }
     }
 }
