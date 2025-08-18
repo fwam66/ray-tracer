@@ -33,11 +33,11 @@ namespace RayTracer
         {
             // Write your code here...
             var v = ray.Origin - this.center;
-            double discriminant = (2 * ray.Direction.Dot(v)) * (2 * ray.Direction.Dot(v)) - 4 * (v.Dot(v) - Math.Pow(this.radius, 2));
+            double discriminant = 2 * ray.Direction.Dot(v) * (2 * ray.Direction.Dot(v)) - 4 * (v.Dot(v) - this.radius * this.radius);
         
             if (discriminant >= 0) // if intersects
             {
-                double dist = (-ray.Direction.Dot(v) - Math.Sqrt(discriminant)) / 2;
+                double dist = (-2 * ray.Direction.Dot(v) - Math.Sqrt(discriminant)) / 2;
                 if (dist >= 0)
                 {
                     var position = ray.Origin + dist * ray.Direction;

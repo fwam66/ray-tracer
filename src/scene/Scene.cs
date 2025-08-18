@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Reflection.Metadata;
@@ -115,22 +116,16 @@ namespace RayTracer
                     Ray ray = new Ray(origin, new Vector3(x, y, z).Normalized());
 
                     // Checks for closest RaycastHits
-                    RayHit nearestHit = null;
-                    foreach (SceneEntity entity in this.entities)
-                    {
-                        RayHit hit = entity.Intersect(ray);
-                        if (hit != null && (nearestHit == null || hit.Distance < nearestHit.Distance))
-                        {
-                            nearestHit = hit;
-                        }
-                    }
+                    RayHit nearestHit = FindNearestHit(ray);
 
-                    // If hit recorded, calculate diffuse term
+                    // Initialise different terms needed for illumination
                     Color diffuseTerm = new Color(0, 0, 0);
                     Color specularTerm = new Color(0, 0, 0);
                     Color ambientTerm = new Color(0, 0, 0);
-                    Color shadow = new Color(1,1,1);
-                 
+                    Color shadow = new Color(1, 1, 1);
+                    Color reflectedTerm = new Color(0, 0, 0);
+
+                    // If hit recorded, calculate colors
                     if (nearestHit != null)
                     {
                         ambientTerm = FindAmbient(nearestHit);
@@ -138,21 +133,26 @@ namespace RayTracer
                         {
                             Vector3 hitToLightDirection = (light.Position - nearestHit.Position).Normalized();
                             Ray shadowRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, hitToLightDirection);
+
                             diffuseTerm += FindDiffuse(nearestHit, light);
                             specularTerm += FindSpecular(nearestHit, light);
+
+                            // Shadow rays for each entity in the scene
                             foreach (SceneEntity entity in this.entities)
                             {
-
                                 RayHit shadowHit = entity.Intersect(shadowRay);
                                 if (shadowHit != null)
                                 {
                                     shadow *= 0;
                                 }
                             }
-
                         }
+                        // Find reflection term
+                        Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
+                        Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
+                        reflectedTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
                     }
-                    Color finalColor = ambientTerm + shadow * (diffuseTerm + specularTerm);
+                    Color finalColor = ambientTerm + shadow * (diffuseTerm + specularTerm) + reflectedTerm;
                     outputImage.SetPixel(i, j, finalColor);
                 }
             }
@@ -182,6 +182,55 @@ namespace RayTracer
         public Color FindAmbient(RayHit hit)
         {
             return hit.Material.AmbientColor + this.ambientLightColor;
+        }
+
+        public Color Trace(Ray ray, int depth)
+        {
+            if (depth <= 0) // Prevents infinite recursion
+            {
+                return new Color(0, 0, 0);
+            }
+            // Check if reflected ray intersects any other entities
+            RayHit nearestHit = FindNearestHit(ray);
+            if (nearestHit == null)
+            {
+                Console.WriteLine("its null");
+            }
+            Color localColor = new Color(0, 0, 0);
+            Color reflectionColor = new Color(0, 0, 0);
+            if (nearestHit != null)
+            {
+                foreach (PointLight light in this.lights) // Calculate local surface color
+                {
+                    localColor += FindDiffuse(nearestHit, light);
+                    localColor += FindSpecular(nearestHit, light);
+                }
+                localColor += FindAmbient(nearestHit);
+              
+                if (nearestHit.Material.Reflectivity > 0) // If entity is reflective then recursively trace
+                {
+                    Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
+                    Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
+                    reflectionColor = Trace(reflectionRay, depth - 1) * nearestHit.Material.Reflectivity;
+                    Console.WriteLine(reflectedDirection);
+                }
+            }
+            return localColor + reflectionColor;
+        }
+
+        public RayHit FindNearestHit(Ray ray)
+        {
+             // Checks for closest RaycastHits
+            RayHit nearestHit = null;
+            foreach (SceneEntity entity in this.entities)
+            {
+                RayHit hit = entity.Intersect(ray);
+                if (hit != null && (nearestHit == null || hit.Distance < nearestHit.Distance))
+                {
+                    nearestHit = hit;
+                }
+            }
+            return nearestHit;
         }
     }
 }
