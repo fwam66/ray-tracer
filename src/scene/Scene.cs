@@ -92,7 +92,7 @@ namespace RayTracer
         {
             // Begin writing your code here...
             int fov = 60;
-            var origin = new Vector3(0, 0, 0);
+            var origin = new Vector3(0, 0, 1e-4);
             float aspect = outputImage.Width / outputImage.Height;
             float scale = MathF.Tan(fov * 0.5f * MathF.PI / 180f);
 
@@ -131,28 +131,35 @@ namespace RayTracer
                         ambientTerm = FindAmbient(nearestHit);
                         foreach (PointLight light in this.lights)
                         {
-                            Vector3 hitToLightDirection = (light.Position - nearestHit.Position).Normalized();
+                            Vector3 hitToLight = light.Position - nearestHit.Position;
+                            double lightDistance = hitToLight.Length();
+                            Vector3 hitToLightDirection = hitToLight.Normalized();
+
+                            // Find shadows
                             Ray shadowRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, hitToLightDirection);
-
-                            diffuseTerm += FindDiffuse(nearestHit, light);
-                            specularTerm += FindSpecular(nearestHit, light);
-
-                            // Shadow rays for each entity in the scene
                             foreach (SceneEntity entity in this.entities)
                             {
                                 RayHit shadowHit = entity.Intersect(shadowRay);
-                                if (shadowHit != null)
+                                if (shadowHit != null && shadowHit.Distance < lightDistance) // Checks if shadowRay intersects and that object is between surface and lights
                                 {
                                     shadow *= 0;
+                                    break;
                                 }
                             }
+
+                            diffuseTerm += shadow * FindDiffuse(nearestHit, light);
+                            specularTerm += shadow * FindSpecular(nearestHit, light);
                         }
                         // Find reflection term
-                        Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
-                        Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
-                        reflectedTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
+                        if (nearestHit.Material.Reflectivity > 0)
+                        {
+                            Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
+                            Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
+                            reflectedTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
+                        }
                     }
-                    Color finalColor = ambientTerm + shadow * (diffuseTerm + specularTerm) + reflectedTerm;
+
+                    Color finalColor = ambientTerm + diffuseTerm + specularTerm + reflectedTerm;
                     outputImage.SetPixel(i, j, finalColor);
                 }
             }
@@ -165,7 +172,6 @@ namespace RayTracer
             Color lightColor = light.Color;
             Vector3 lightDirection = (light.Position - hit.Position).Normalized();
             return materialDiffuseColor * lightColor * Math.Max(0, normal.Dot(lightDirection));
-
         }
 
         public Color FindSpecular(RayHit hit, PointLight light)
@@ -192,10 +198,7 @@ namespace RayTracer
             }
             // Check if reflected ray intersects any other entities
             RayHit nearestHit = FindNearestHit(ray);
-            if (nearestHit == null)
-            {
-                Console.WriteLine("its null");
-            }
+
             Color localColor = new Color(0, 0, 0);
             Color reflectionColor = new Color(0, 0, 0);
             if (nearestHit != null)
@@ -203,7 +206,7 @@ namespace RayTracer
                 foreach (PointLight light in this.lights) // Calculate local surface color
                 {
                     localColor += FindDiffuse(nearestHit, light);
-                    localColor += FindSpecular(nearestHit, light);
+                    localColor += FindSpecular(nearestHit, light);  
                 }
                 localColor += FindAmbient(nearestHit);
               
@@ -229,6 +232,14 @@ namespace RayTracer
                 {
                     nearestHit = hit;
                 }
+            }
+            if (nearestHit == null)
+            {
+                Console.WriteLine($"No hit for ray from {ray.Origin}");
+            }
+            else
+            {
+                Console.WriteLine($"Hit at distance {nearestHit.Distance} from {ray.Origin}");
             }
             return nearestHit;
         }

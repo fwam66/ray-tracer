@@ -41,7 +41,7 @@ namespace RayTracer
 
             if (plane.Dot(ray.Direction) != 0) // Not parallel to triangle plane
             {
-                double dist = (plane.Dot(this.v0 - ray.Origin)) / (plane.Dot(ray.Direction));
+                double dist = plane.Dot(this.v0 - ray.Origin) / plane.Dot(ray.Direction);
                 var position = ray.Origin + dist * ray.Direction;
 
                 // Compute barycentric coordinates
