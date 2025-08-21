@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Numerics;
 using System.Reflection.Metadata;
 using System.Security.Claims;
+using ImageMagick;
 
 namespace RayTracer
 {
@@ -124,6 +125,7 @@ namespace RayTracer
                     Color ambientTerm = new Color(0, 0, 0);
                     Color shadow = new Color(1, 1, 1);
                     Color reflectedTerm = new Color(0, 0, 0);
+                    Color refractionTerm = new Color(0, 0, 0);
 
                     // If hit recorded, calculate colors
                     if (nearestHit != null)
@@ -157,9 +159,51 @@ namespace RayTracer
                             Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
                             reflectedTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
                         }
+
+
+                        // Find refraction term
+                        if (nearestHit.Material.Transmissivity > 0)
+                        {
+                            Vector3 surfaceNormal = nearestHit.Normal;
+                            double ni = 0;
+                            double nt = 0;
+                            if (ray.Direction.Dot(surfaceNormal) > 0) // ray is exiting, normal must be flipped
+                            {
+                                surfaceNormal = -surfaceNormal;
+                                ni = nearestHit.Material.RefractiveIndex; // from material
+                                nt = 1.0; // to air
+                            }
+                            else // ray is entering
+                            {
+                                ni = 1.0; // from air
+                                nt = nearestHit.Material.RefractiveIndex; // to material
+                            }
+                           
+                            double n = ni / nt;
+                            double cosThetaI = -ray.Direction.Dot(surfaceNormal);
+                            double discriminant = 1 - n * n * (1 - cosThetaI * cosThetaI);
+
+                            if (discriminant < 0)
+                            { // total internal reflection, fall back to calcualting reflection
+                                if (nearestHit.Material.Reflectivity > 0)
+                                {
+                                    Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
+                                    Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
+                                    refractionTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
+                                }
+                            }
+                            else
+                            {
+                                Vector3 refractedDirection = (n * ray.Direction + (n * cosThetaI - Math.Sqrt(discriminant)) * surfaceNormal).Normalized();
+                                Ray refractedRay = new Ray(nearestHit.Position + refractedDirection * 1e-4, refractedDirection);
+                                refractionTerm = Trace(refractedRay, 10) * nearestHit.Material.Transmissivity;
+                                
+                            }
+                            
+                        }
                     }
 
-                    Color finalColor = ambientTerm + diffuseTerm + specularTerm + reflectedTerm;
+                    Color finalColor = ambientTerm + diffuseTerm + specularTerm + reflectedTerm + refractionTerm;
                     outputImage.SetPixel(i, j, finalColor);
                 }
             }
@@ -201,29 +245,68 @@ namespace RayTracer
 
             Color localColor = new Color(0, 0, 0);
             Color reflectionColor = new Color(0, 0, 0);
+            Color refractionColor = new Color(0, 0, 0);
             if (nearestHit != null)
             {
                 foreach (PointLight light in this.lights) // Calculate local surface color
                 {
                     localColor += FindDiffuse(nearestHit, light);
-                    localColor += FindSpecular(nearestHit, light);  
+                    localColor += FindSpecular(nearestHit, light);
                 }
                 localColor += FindAmbient(nearestHit);
-              
+
                 if (nearestHit.Material.Reflectivity > 0) // If entity is reflective then recursively trace
                 {
                     Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
                     Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
                     reflectionColor = Trace(reflectionRay, depth - 1) * nearestHit.Material.Reflectivity;
-                    Console.WriteLine(reflectedDirection);
                 }
+
+                // handle refraction
+                if (nearestHit.Material.Transmissivity > 0)
+                {
+                    Vector3 surfaceNormal = nearestHit.Normal;
+                    double ni = 0;
+                    double nt = 0;
+                    if (ray.Direction.Dot(surfaceNormal) > 0) // ray is exiting, normal must be flipped
+                    {
+                        surfaceNormal = -surfaceNormal;
+                        ni = nearestHit.Material.RefractiveIndex; // from material
+                        nt = 1.0; // to air   
+                    }
+                    else // ray is entering                               
+                    {
+                        ni = 1.0; // from air
+                        nt = nearestHit.Material.RefractiveIndex; // to material
+                    }
+                    double n = ni / nt;
+                    double cosThetaI = -ray.Direction.Dot(surfaceNormal);
+                    double discriminant = 1 - n * n * (1 - cosThetaI * cosThetaI);
+                    if (discriminant < 0)
+                    { // total internal reflection, fall back to calcualting reflection
+                        if (nearestHit.Material.Reflectivity > 0)
+                        {
+                            Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
+                            Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
+                            refractionColor = Trace(reflectionRay, depth-1) * nearestHit.Material.Reflectivity;
+                        }                          
+                    }
+                    else
+                    {
+                    Vector3 refractedDirection = (n * ray.Direction + (n * cosThetaI - Math.Sqrt(discriminant)) * surfaceNormal).Normalized();
+                    Ray refractedRay = new Ray(nearestHit.Position + refractedDirection * 1e-4, refractedDirection);
+                    refractionColor = Trace(refractedRay, depth-1) * nearestHit.Material.Transmissivity;
+                                
+                    }
+                }
+
             }
-            return localColor + reflectionColor;
+            return localColor + reflectionColor + refractionColor;
         }
 
         public RayHit FindNearestHit(Ray ray)
         {
-             // Checks for closest RaycastHits
+            // Checks for closest RaycastHits
             RayHit nearestHit = null;
             foreach (SceneEntity entity in this.entities)
             {
@@ -232,14 +315,6 @@ namespace RayTracer
                 {
                     nearestHit = hit;
                 }
-            }
-            if (nearestHit == null)
-            {
-                Console.WriteLine($"No hit for ray from {ray.Origin}");
-            }
-            else
-            {
-                Console.WriteLine($"Hit at distance {nearestHit.Distance} from {ray.Origin}");
             }
             return nearestHit;
         }

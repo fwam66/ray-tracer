@@ -101,4 +101,7 @@ dotnet run -- -f tests/sample_scene_2.txt -o images/sample_scene_2.png
 ## References
 
 *You must list any references you used - add them here!*
+https://www.scratchapixel.com
+https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/operator-overloading
+
 
