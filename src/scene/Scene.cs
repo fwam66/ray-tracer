@@ -93,7 +93,7 @@ namespace RayTracer
         {
             // Begin writing your code here...
             int fov = 60;
-            var origin = new Vector3(0, 0, 1e-4);
+            var origin = new Vector3(0, 0, 1e-6);
             float aspect = outputImage.Width / outputImage.Height;
             float scale = MathF.Tan(fov * 0.5f * MathF.PI / 180f);
 
@@ -118,88 +118,82 @@ namespace RayTracer
 
                     // Checks for closest RaycastHits
                     RayHit nearestHit = FindNearestHit(ray);
+                    if (nearestHit == null) // if no hit then continue to next pixel
+                    {
+                        continue;
+                    }
 
                     // Initialise different terms needed for illumination
                     Color diffuseTerm = new Color(0, 0, 0);
                     Color specularTerm = new Color(0, 0, 0);
-                    Color ambientTerm = new Color(0, 0, 0);
+                    Color ambientTerm = FindAmbient(nearestHit);
                     Color shadow = new Color(1, 1, 1);
                     Color reflectedTerm = new Color(0, 0, 0);
                     Color refractionTerm = new Color(0, 0, 0);
 
-                    // If hit recorded, calculate colors
-                    if (nearestHit != null)
+                    // For each light, calculate color for each pixel
+                    foreach (PointLight light in this.lights)
                     {
-                        ambientTerm = FindAmbient(nearestHit);
-                        foreach (PointLight light in this.lights)
-                        {
-                            Vector3 hitToLight = light.Position - nearestHit.Position;
-                            double lightDistance = hitToLight.Length();
-                            Vector3 hitToLightDirection = hitToLight.Normalized();
+                        Vector3 hitToLight = light.Position - nearestHit.Position;
+                        double lightDistance = hitToLight.Length();
+                        Vector3 hitToLightDirection = hitToLight.Normalized();
 
-                            // Find shadows
-                            Ray shadowRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, hitToLightDirection);
-                            foreach (SceneEntity entity in this.entities)
+                        // Find shadows
+                        Ray shadowRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-6, hitToLightDirection);
+                        foreach (SceneEntity entity in this.entities)
+                        {
+                            RayHit shadowHit = entity.Intersect(shadowRay);
+                            if (shadowHit != null && shadowHit.Distance < lightDistance) // Checks if shadowRay intersects and that object is between surface and lights
                             {
-                                RayHit shadowHit = entity.Intersect(shadowRay);
-                                if (shadowHit != null && shadowHit.Distance < lightDistance) // Checks if shadowRay intersects and that object is between surface and lights
-                                {
-                                    shadow *= 0;
-                                    break;
-                                }
+                                shadow *= 0;
+                                break;
                             }
-
-                            diffuseTerm += shadow * FindDiffuse(nearestHit, light);
-                            specularTerm += shadow * FindSpecular(nearestHit, light);
                         }
-                        // Find reflection term
-                        if (nearestHit.Material.Reflectivity > 0)
+
+                        diffuseTerm += shadow * FindDiffuse(nearestHit, light);
+                        specularTerm += shadow * FindSpecular(nearestHit, light);
+                    }
+                    // Find reflection term
+                    if (nearestHit.Material.Reflectivity > 0)
+                    {
+                        Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
+                        Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-6, reflectedDirection);
+                        reflectedTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
+                    }
+
+                    // Find refraction term
+                    if (nearestHit.Material.Transmissivity > 0)
+                    {
+                        Vector3 surfaceNormal = nearestHit.Normal;
+                        double ni = 0;
+                        double nt = 0;
+                        if (ray.Direction.Dot(surfaceNormal) > 0) // ray is exiting, normal must be flipped
                         {
+                            surfaceNormal = -surfaceNormal;
+                            ni = nearestHit.Material.RefractiveIndex; // from material
+                            nt = 1.0; // to air
+                        }
+                        else // ray is entering
+                        {
+                            ni = 1.0; // from air
+                            nt = nearestHit.Material.RefractiveIndex; // to material
+                        }
+                        
+                        double n = ni / nt;
+                        double cosThetaI = -ray.Direction.Dot(surfaceNormal);
+                        double discriminant = 1 - n * n * (1 - cosThetaI * cosThetaI);
+
+                        if (discriminant < 0)
+                        { // total internal reflection, fall back to calcualting reflection
                             Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
-                            Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
-                            reflectedTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
+                            Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-6, reflectedDirection);
+                            refractionTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
                         }
-
-
-                        // Find refraction term
-                        if (nearestHit.Material.Transmissivity > 0)
+                        else
                         {
-                            Vector3 surfaceNormal = nearestHit.Normal;
-                            double ni = 0;
-                            double nt = 0;
-                            if (ray.Direction.Dot(surfaceNormal) > 0) // ray is exiting, normal must be flipped
-                            {
-                                surfaceNormal = -surfaceNormal;
-                                ni = nearestHit.Material.RefractiveIndex; // from material
-                                nt = 1.0; // to air
-                            }
-                            else // ray is entering
-                            {
-                                ni = 1.0; // from air
-                                nt = nearestHit.Material.RefractiveIndex; // to material
-                            }
-                           
-                            double n = ni / nt;
-                            double cosThetaI = -ray.Direction.Dot(surfaceNormal);
-                            double discriminant = 1 - n * n * (1 - cosThetaI * cosThetaI);
-
-                            if (discriminant < 0)
-                            { // total internal reflection, fall back to calcualting reflection
-                                if (nearestHit.Material.Reflectivity > 0)
-                                {
-                                    Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
-                                    Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
-                                    refractionTerm = Trace(reflectionRay, 10) * nearestHit.Material.Reflectivity;
-                                }
-                            }
-                            else
-                            {
-                                Vector3 refractedDirection = (n * ray.Direction + (n * cosThetaI - Math.Sqrt(discriminant)) * surfaceNormal).Normalized();
-                                Ray refractedRay = new Ray(nearestHit.Position + refractedDirection * 1e-4, refractedDirection);
-                                refractionTerm = Trace(refractedRay, 10) * nearestHit.Material.Transmissivity;
-                                
-                            }
-                            
+                            Vector3 refractedDirection = (n * ray.Direction + (n * cosThetaI - Math.Sqrt(discriminant)) * surfaceNormal).Normalized();
+                            Ray refractedRay = new Ray(nearestHit.Position + refractedDirection * 1e-6, refractedDirection);
+                            refractionTerm = Trace(refractedRay, 10) * nearestHit.Material.Transmissivity;   
                         }
                     }
 
@@ -258,7 +252,7 @@ namespace RayTracer
                 if (nearestHit.Material.Reflectivity > 0) // If entity is reflective then recursively trace
                 {
                     Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
-                    Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
+                    Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-6, reflectedDirection);
                     reflectionColor = Trace(reflectionRay, depth - 1) * nearestHit.Material.Reflectivity;
                 }
 
@@ -287,14 +281,14 @@ namespace RayTracer
                         if (nearestHit.Material.Reflectivity > 0)
                         {
                             Vector3 reflectedDirection = (ray.Direction - 2 * ray.Direction.Dot(nearestHit.Normal) * nearestHit.Normal).Normalized();
-                            Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, reflectedDirection);
+                            Ray reflectionRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-6, reflectedDirection);
                             refractionColor = Trace(reflectionRay, depth-1) * nearestHit.Material.Reflectivity;
                         }                          
                     }
                     else
                     {
                     Vector3 refractedDirection = (n * ray.Direction + (n * cosThetaI - Math.Sqrt(discriminant)) * surfaceNormal).Normalized();
-                    Ray refractedRay = new Ray(nearestHit.Position + refractedDirection * 1e-4, refractedDirection);
+                    Ray refractedRay = new Ray(nearestHit.Position + refractedDirection * 1e-6, refractedDirection);
                     refractionColor = Trace(refractedRay, depth-1) * nearestHit.Material.Transmissivity;
                                 
                     }
