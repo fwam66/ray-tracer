@@ -7,10 +7,10 @@ implementation here.
 Please ensure your student details are specified below (*exactly* as on UniMelb
 records):
 
-**Name:** ... \
-**Student Number:** XXXXXXX \
-**Username:** ... \
-**Email:** ...@student.unimelb.edu.au
+**Name:** Ling Wei Teh \
+**Student Number:** 1462878 \
+**Username:** lingweit \
+**Email:** lingweit@student.unimelb.edu.au
 
 ## Completed stages
 

@@ -37,18 +37,28 @@ namespace RayTracer
             double b = ray.Direction.Dot(v);
             double c = v.Dot(v) - this.radius * this.radius;
             double discriminant = b * b - c;
+
+            if (discriminant < 0) return null;
             
-            if (discriminant >= 0) // if intersects
+            double dist1 = -b - Math.Sqrt(discriminant);
+            double dist2 = -b + Math.Sqrt(discriminant);
+            double dist;
+            if (dist1 >= 0)
             {
-                double dist = -b - Math.Sqrt(discriminant);
-                if (dist >= 0)
-                {
-                    var position = ray.Origin + dist * ray.Direction;
-                    var normal = (position - this.center).Normalized();
-                    return new RayHit(position, normal, ray.Direction, material, dist);
-                }
+                dist = dist1;
             }
-            return null;    
+            else if (dist2 >= 0)
+            {
+                dist = dist2;
+            }
+            else
+            {
+                return null;
+            } 
+        
+            var position = ray.Origin + dist * ray.Direction;
+            var normal = (position - this.center).Normalized();
+            return new RayHit(position, normal, ray.Direction, material, dist);
         }
 
         /// <summary>
