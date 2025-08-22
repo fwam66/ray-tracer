@@ -24,18 +24,18 @@ Tip: To tick, place an x between the square brackes [ ], like so: [x]
 ##### Stage 1
 
 - [x] Stage 1.1 - Familiarise yourself with the template
-- [ ] Stage 1.2 - Implement vector mathematics
-- [ ] Stage 1.3 - Fire a ray for each pixel
-- [ ] Stage 1.4 - Calculate ray-entity intersections
-- [ ] Stage 1.5 - Output primitives as solid colours
+- [x] Stage 1.2 - Implement vector mathematics
+- [x] Stage 1.3 - Fire a ray for each pixel
+- [x] Stage 1.4 - Calculate ray-entity intersections
+- [x] Stage 1.5 - Output primitives as solid colours
 
 ##### Stage 2
 
-- [ ] Stage 2.1 - Illumination
-- [ ] Stage 2.2 - Shadow rays
-- [ ] Stage 2.3 - Reflection rays
-- [ ] Stage 2.4 - Refraction rays
-- [ ] Stage 2.5 - The Whitted Illumination Model
+- [x] Stage 2.1 - Illumination
+- [x] Stage 2.2 - Shadow rays
+- [x] Stage 2.3 - Reflection rays
+- [x] Stage 2.4 - Refraction rays
+- [x] Stage 2.5 - The Whitted Illumination Model
 
 ##### Stage 3
 
