@@ -95,7 +95,7 @@ namespace RayTracer
         {
             // Begin writing your code here...
             int fov = 60;
-            var origin = new Vector3(0, 0, 1e-4);
+            var origin = new Vector3(0, 0, 1e-6);
             float aspect = outputImage.Width / outputImage.Height;
             float scale = MathF.Tan(fov * 0.5f * MathF.PI / 180f);
 
@@ -117,7 +117,7 @@ namespace RayTracer
                     Ray ray = new Ray(origin, new Vector3(x, y, z).Normalized());
 
                     // Find color for each pixel
-                    Color color = Trace(ray, 100); 
+                    Color color = Trace(ray, 5); 
                     outputImage.SetPixel(i, j, color);
                 }
             }
@@ -153,7 +153,7 @@ namespace RayTracer
             Vector3 hitToLight = light.Position - nearestHit.Position;
             double lightDistance = hitToLight.Length();
             Vector3 hitToLightDirection = hitToLight.Normalized();
-            Ray shadowRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-4, hitToLightDirection);
+            Ray shadowRay = new Ray(nearestHit.Position + nearestHit.Normal * 1e-6, hitToLightDirection);
             bool isShadow = false;
             foreach (SceneEntity entity in this.entities)
             {
@@ -188,7 +188,7 @@ namespace RayTracer
                 return null;
             }
             Vector3 T = (eta * D + N * (eta * cosThetaI - Math.Sqrt(discriminant))).Normalized();
-            return new Ray(nearestHit.Position - N * 1e-4, T);
+            return new Ray(nearestHit.Position - N * 1e-6, T);
         }
 
         public Color FindLocalColor(RayHit nearestHit)
@@ -230,7 +230,7 @@ namespace RayTracer
 
             // Handle reflectionor transmissive then recursively trace
             Color reflectionColor = new Color(0,0,0);
-            double offset = 1e-4;
+            double offset = 1e-6;
             if (reflectivity > 0.0f) {
                 Vector3 reflectedDirection = (D - 2 * D.Dot(N) * N).Normalized();
                 Ray reflectionRay = new Ray(nearestHit.Position + N * offset, reflectedDirection);

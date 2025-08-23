@@ -1,4 +1,9 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Net.Http.Headers;
+using System.Numerics;
+using ImageMagick;
 
 namespace RayTracer
 {
@@ -11,6 +16,28 @@ namespace RayTracer
         private Transform transform;
         private Material material;
 
+        private List<Vector3> vertices;
+        private List<Vector3> normals;
+
+        private Vector3 boundMin;
+        private Vector3 boundMax;
+
+        private struct FaceVertex
+        {
+            public int vertexIndex;
+            public int? textureIndex;
+            public int normalIndex;
+            public FaceVertex(int vi, int? ti, int ni)
+            {
+                this.vertexIndex = vi;
+                this.textureIndex = ti;
+                this.normalIndex = ni;
+            }
+        }
+        private List<Triangle> faces; // list of all faces of the object
+
+
+
         /// <summary>
         /// Construct a new OBJ model.
         /// </summary>
@@ -22,13 +49,56 @@ namespace RayTracer
             this.objFilePath = objFilePath;
             this.transform = transform;
             this.material = material;
+            this.faces = new List<Triangle>();
 
             // Here's some code to get you started reading the file...
-            string[] lines = File.ReadAllLines(objFilePath);
-            for (int i = 0; i < lines.Length; i++)
+            this.vertices = new List<Vector3>();
+            this.normals = new List<Vector3>();
+            
+            foreach (string line in File.ReadLines(objFilePath))
             {
-                // The current line is lines[i]
+                // The current line is line  
+               
+                // If invalid line skip line
+                if (string.IsNullOrEmpty(line) || line.StartsWith("#")) continue;
+
+                // Vertex line
+                if (line.StartsWith("v "))
+                {
+                    vertices.Add(ParseVector(line));
+                    continue;
+                }
+                // Normal line
+                if (line.StartsWith("vn"))
+                {
+                    normals.Add(ParseVector(line).Normalized());
+                    continue;
+                }
+                // Face line, find a face's indices, then triangulate
+                if (line.StartsWith("f"))
+                {
+                    faces.Add(Triangulate(ParseFace(line)));
+                    continue;
+                }
             }
+
+            boundMax = vertices[0];
+            boundMin = vertices[0];
+            foreach (var v in vertices)
+            {
+                this.boundMin = new Vector3(
+                    Math.Min(boundMin.X, v.X),
+                    Math.Min(boundMin.Y, v.Y),
+                    Math.Min(boundMin.Z, v.Z)
+                );
+
+                this.boundMax = new Vector3(
+                    Math.Max(boundMax.X, v.X),
+                    Math.Max(boundMax.Y, v.Y),
+                    Math.Max(boundMax.Z, v.Z)
+                );
+            }
+
         }
 
         /// <summary>
@@ -40,12 +110,78 @@ namespace RayTracer
         public RayHit Intersect(Ray ray)
         {
             // Write your code here...
-            return null;
+        
+            if (!RayIntersectsBox(ray)) return null; // If ray does not intersects bounding box, no need to continue
+
+            RayHit nearestHit = null;
+            foreach (Triangle face in faces)
+            {
+
+                RayHit hit = face.Intersect(ray);
+
+                if (hit != null && (nearestHit == null || hit.Distance < nearestHit.Distance))
+                {
+                    nearestHit = hit;
+                }
+            }
+            return nearestHit;
         }
 
         /// <summary>
         /// The material attached to this object.
         /// </summary>
         public Material Material { get { return this.material; } }
+
+        private Vector3 ParseVector(string line)
+        {
+            var coords = line.Split(' ');
+            double x = double.Parse(coords[1]);
+            double y = double.Parse(coords[2]);
+            double z = double.Parse(coords[3]);
+            return transform.Apply(new Vector3(x, y, z));
+        }
+
+        private List<FaceVertex> ParseFace(string line)
+        {
+            List<FaceVertex> faceVertices = new List<FaceVertex>();
+            var token = line.Split(' ');
+            for (int i = 1; i < token.Length; i++)
+            {
+                faceVertices.Add(ParseFaceVertex(token[i]));
+            }
+            return faceVertices;
+        }
+        private FaceVertex ParseFaceVertex(string token)
+        {
+            var part = token.Split('/');
+            int vertexIndex = int.Parse(part[0]);
+            int? textureIndex = (part.Length > 1 && !string.IsNullOrEmpty(part[1]))
+                                ? int.Parse(part[1]) : null;
+            int normalIndex = int.Parse(part[2]);
+
+            return new FaceVertex(vertexIndex, textureIndex, normalIndex);
+        }
+
+        private Triangle Triangulate(List<FaceVertex> faceVertices)
+        {
+            Vector3 v1 =  vertices[faceVertices[0].vertexIndex - 1];
+            Vector3 v2 =  vertices[faceVertices[1].vertexIndex - 1];
+            Vector3 v3 =  vertices[faceVertices[2].vertexIndex - 1];
+            return new Triangle(v1, v2, v3, material);
+        }
+
+
+        private bool RayIntersectsBox(Ray ray)
+        {
+            // Checks if ray intersects with bounding box
+            Vector3 invDir = new Vector3(
+                1 / ray.Direction.X,
+                1 / ray.Direction.Y,
+                1 / ray.Direction.Z
+            );
+
+
+            return true;
+        }
     }
 }
