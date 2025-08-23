@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http.Headers;
 using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 using ImageMagick;
 
 namespace RayTracer
@@ -98,7 +99,7 @@ namespace RayTracer
                     Math.Max(boundMax.Z, v.Z)
                 );
             }
-
+            Console.WriteLine(faces.Count);
         }
 
         /// <summary>
@@ -109,16 +110,15 @@ namespace RayTracer
         /// <returns>Ray hit data, or null if no hit</returns>
         public RayHit Intersect(Ray ray)
         {
-            // Write your code here...
-        
+            int intersections = 0;
             if (!RayIntersectsBox(ray)) return null; // If ray does not intersects bounding box, no need to continue
 
             RayHit nearestHit = null;
             foreach (Triangle face in faces)
             {
-
                 RayHit hit = face.Intersect(ray);
-
+                intersections += 1;
+                Console.WriteLine(intersections);
                 if (hit != null && (nearestHit == null || hit.Distance < nearestHit.Distance))
                 {
                     nearestHit = hit;
@@ -175,13 +175,21 @@ namespace RayTracer
         {
             // Checks if ray intersects with bounding box
             Vector3 invDir = new Vector3(
-                1 / ray.Direction.X,
-                1 / ray.Direction.Y,
-                1 / ray.Direction.Z
-            );
+                                1 / ray.Direction.X,
+                                1 / ray.Direction.Y,
+                                1 / ray.Direction.Z
+            ).Normalized();
+            double d1 = (boundMin.X - ray.Origin.X) * invDir.X;
+            double d2 = (boundMax.X - ray.Origin.X) * invDir.X;
+            double d3 = (boundMin.Y - ray.Origin.Y) * invDir.Y;
+            double d4 = (boundMax.Y - ray.Origin.Y) * invDir.Y;
+            double d5 = (boundMin.Z - ray.Origin.Z) * invDir.Z;
+            double d6 = (boundMax.Z - ray.Origin.Z) * invDir.Z;
 
+            double dMin = Math.Max(Math.Max(Math.Min(d1, d2), Math.Min(d3, d4)), Math.Min(d5, d6)); // find the largest minimium out of the distances
+            double dMax = Math.Min(Math.Min(Math.Max(d1, d2), Math.Max(d3, d4)), Math.Max(d5, d6)); // find the smallest maximum out of the distances
 
-            return true;
+            return dMax >= Math.Max(dMin, 0); // if smallest max from each axis is larger than the largest min from each axis we know that the ray intersects the box
         }
     }
 }
