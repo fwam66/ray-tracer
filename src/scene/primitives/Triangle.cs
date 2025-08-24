@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace RayTracer
@@ -58,16 +59,28 @@ namespace RayTracer
             return null;
         }
 
-        public double ComputeArea(Vector3 a, Vector3 b, Vector3 c, Vector3 normal) {
+        public double ComputeArea(Vector3 a, Vector3 b, Vector3 c, Vector3 normal)
+        {
             var eBA = b - a;
             var eCA = c - a;
             return 0.5 * eBA.Cross(eCA).Dot(normal);
-            
+
         }
 
         /// <summary>
         /// The material of the triangle.
         /// </summary>
         public Material Material { get { return this.material; } }
+
+        public List<Vector3> Vertices()
+        {
+            List<Vector3> vertices = new List<Vector3> { v0, v1, v2 };
+            return vertices;
+        }
+
+        public Vector3 Centroid()
+        {
+            return (this.v0 + this.v1 + this.v2) / 3f;
+        }
     }
 }
