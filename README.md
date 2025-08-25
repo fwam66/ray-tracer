@@ -39,20 +39,23 @@ Tip: To tick, place an x between the square brackes [ ], like so: [x]
 
 ##### Stage 3
 
-- [ ] Stage 3.1 - Advanced features
+- [x] Stage 3.1 - Advanced features
 - [ ] Stage 3.2 - Advanced add-ons
   - [ ] A.1 - Anti-aliasing
   - [ ] A.2 - Soft shadows
   - [ ] A.3 - Depth of field blur
-  - [ ] A.4 - Motion blur
+  - [x] A.4 - Motion blur
   - [ ] B.1 - Color texture mapping
   - [ ] B.2 - Bump or normal mapping
   - [ ] B.3 - Procedural textures
   - [ ] C.1 - Simple animation
-  - [ ] C.2 - Keyframe animation
-  - [ ] C.3 - Camera animation
+  - [x] C.2 - Keyframe animation
+  - [x] C.3 - Camera animation
 
 *Please summarise your approach(es) to stage 3 here.*
+For Stage 3.1, BVH data structure was implemented to drastically reduce the time complexity of OBJ rendering, turning an almost 15 minute render time to around 4-5 seconds. For custom cameras, simply had to change the hardcoded variables to apply the camera's transforms and take the camera's position as the origin.
+
+For Stage 3.2, I have decided to pick add-ons that are focused around animations and creating a dynamic and moving picture. 
 
 ## Final scene render
 
@@ -103,6 +106,7 @@ dotnet run -- -f tests/sample_scene_2.txt -o images/sample_scene_2.png
 *You must list any references you used - add them here!*
 https://www.scratchapixel.com
 https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/operator-overloading
-
+https://www.tutorialspoint.com/computer_graphics/computer_graphics_keyframe_animation.htm
 https://learn.microsoft.com/en-us/dotnet/api/system.string?view=net-9.0
+http://codeplexarchive.org/project/magick
 

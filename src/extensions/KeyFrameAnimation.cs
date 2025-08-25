@@ -27,6 +27,7 @@ namespace RayTracer
         {
             this.entity = entity;
             KeyFrames = new List<KeyFrame>();
+
         }
 
         /// <summary>
@@ -46,6 +47,17 @@ namespace RayTracer
         public SceneEntity Entity
         {
             get { return entity; }
+        }
+
+        public void Update(double time)
+        {
+            if (KeyFrames.Count == 0) return; // No keyframes so we skip
+            if (KeyFrames.Count == 1) // Just one keyframe 
+            {
+                
+            }
+            double timesqr = time * time;
+            double timecubed = timesqr * time;
         }
     }
 }

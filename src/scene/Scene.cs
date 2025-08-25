@@ -94,10 +94,12 @@ namespace RayTracer
         public void Render(Image outputImage, double time = 0)
         {
             // Begin writing your code here...
-            int fov = 60;
-            var origin = camera.Transform.Position;
-            float aspect = outputImage.Width / outputImage.Height;
+            float fov = 60.0f;
+            var origin = camera.Transform.Position + new Vector3(0, 0, 1e-4);
+            float aspect = (float)outputImage.Width / (float)outputImage.Height;
             float scale = MathF.Tan(fov * 0.5f * MathF.PI / 180f);
+
+            
 
             for (int i = 0; i < outputImage.Width; i++)
             {
@@ -105,8 +107,8 @@ namespace RayTracer
                 {
                     // 2D pixel coord to 3D ray
                     // First, convert 2D coord to range of [-1, 1]
-                    float x_converted = (i + 0.5f) * 2 / outputImage.Width - 1;
-                    float y_converted = 1 - (j + 0.5f) * 2 / outputImage.Height;
+                    float x_converted = (i + 0.5f) * 2 / (float)outputImage.Width - 1;
+                    float y_converted = 1 - (j + 0.5f) * 2 / (float)outputImage.Height;
 
                     // Then, calculate x, y, z for direction from origin
                     float x = x_converted * aspect * scale;
@@ -114,10 +116,10 @@ namespace RayTracer
                     float z = 1;
 
                     // Create Ray with normalized direction vector
-                    Ray ray = new Ray(origin, camera.Transform.Rotation.Rotate(new Vector3(x, y, z).Normalized()).Normalized());
+                    Ray ray = new Ray(origin, camera.Transform.Rotation.Rotate(new Vector3(x, y, z)).Normalized());
 
                     // Find color for each pixel
-                    Color color = Trace(ray, 5); 
+                    Color color = Trace(ray, 5);
                     outputImage.SetPixel(i, j, color);
                 }
             }
@@ -135,7 +137,7 @@ namespace RayTracer
         public Color FindSpecular(RayHit hit, PointLight light)
         {
             Color materialSpecularColor = hit.Material.SpecularColor;
-            Vector3 directionToCamera = (-hit.Position).Normalized();
+            Vector3 directionToCamera = (camera.Transform.Position - hit.Position).Normalized();
             double shininess = hit.Material.Shininess;
             Color lightColor = light.Color;
             Vector3 lightDirection = (light.Position - hit.Position).Normalized();
@@ -167,7 +169,8 @@ namespace RayTracer
             return isShadow;
         }
 
-        public Ray? FindRefRay(RayHit nearestHit, Ray ray) {
+        public Ray? FindRefRay(RayHit nearestHit, Ray ray)
+        {
             Vector3 D = ray.Direction;
             Vector3 N = nearestHit.Normal;
             double etai = 1.0;
@@ -180,7 +183,7 @@ namespace RayTracer
                 N = -N;
                 eta = 1 / eta; // flipped
                 cosThetaI = -cosThetaI;
-                
+
             }
             double discriminant = 1.0f - eta * eta * (1.0f - cosThetaI * cosThetaI);
             if (discriminant < 0) // no real solution, total internal reflection
@@ -193,7 +196,7 @@ namespace RayTracer
 
         public Color FindLocalColor(RayHit nearestHit)
         {
-            Color localColor = new Color(0,0,0);
+            Color localColor = new Color(0, 0, 0);
             foreach (PointLight light in this.lights)
             {
                 // Find if there is shadow
@@ -229,15 +232,16 @@ namespace RayTracer
             Color localColor = FindLocalColor(nearestHit);
 
             // Handle reflectionor transmissive then recursively trace
-            Color reflectionColor = new Color(0,0,0);
+            Color reflectionColor = new Color(0, 0, 0);
             double offset = 1e-6;
-            if (reflectivity > 0.0f) {
+            if (reflectivity > 0.0f)
+            {
                 Vector3 reflectedDirection = (D - 2 * D.Dot(N) * N).Normalized();
                 Ray reflectionRay = new Ray(nearestHit.Position + N * offset, reflectedDirection);
                 reflectionColor = Trace(reflectionRay, depth - 1);
             }
 
-            Color refractionColor = new Color(0,0,0);
+            Color refractionColor = new Color(0, 0, 0);
             // Handle refraction
             if (transmissivity > 0.0f)
             {

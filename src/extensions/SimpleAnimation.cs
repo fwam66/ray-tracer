@@ -27,6 +27,7 @@ namespace RayTracer
         {
             get { return entity; }
         }
+        public void Update(double time){ return; }
     }
 }
 
