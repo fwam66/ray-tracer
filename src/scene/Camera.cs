@@ -9,6 +9,7 @@ namespace RayTracer
     {
         public Transform Transform { get; private set; }
 
+        
         /// <summary>
         /// Construct a new camera with a specified transformation.
         /// </summary>

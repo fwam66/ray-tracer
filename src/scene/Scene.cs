@@ -95,7 +95,7 @@ namespace RayTracer
         {
             // Begin writing your code here...
             int fov = 60;
-            var origin = new Vector3(0, 0, 1e-6);
+            var origin = camera.Transform.Position;
             float aspect = outputImage.Width / outputImage.Height;
             float scale = MathF.Tan(fov * 0.5f * MathF.PI / 180f);
 
@@ -114,7 +114,7 @@ namespace RayTracer
                     float z = 1;
 
                     // Create Ray with normalized direction vector
-                    Ray ray = new Ray(origin, new Vector3(x, y, z).Normalized());
+                    Ray ray = new Ray(origin, camera.Transform.Rotation.Rotate(new Vector3(x, y, z).Normalized()).Normalized());
 
                     // Find color for each pixel
                     Color color = Trace(ray, 5); 
