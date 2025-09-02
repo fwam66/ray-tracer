@@ -14,13 +14,16 @@ namespace RayTracer
         private Material material;
         private double distance;
 
-        public RayHit(Vector3 position, Vector3 normal, Vector3 incident, Material material, double distance)
+        private Color texture;
+
+        public RayHit(Vector3 position, Vector3 normal, Vector3 incident, Material material, double distance, Color texture)
         {
             this.position = position;
             this.normal = normal;
             this.incident = incident;
             this.distance = distance;
             this.material = material;
+            this.texture = texture;
         }
 
         // You may wish to write methods to compute other vectors, 
@@ -33,7 +36,9 @@ namespace RayTracer
         public Vector3 Incident { get { return this.incident; } }
 
         public double Distance { get { return this.distance; } }
-        
+
         public Material Material { get { return this.material; } }
+        
+        public Color Texture { get { return this.texture; }}
     }
 }

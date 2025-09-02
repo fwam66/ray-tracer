@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Net.Http.Headers;
 using System.Numerics;
@@ -19,6 +20,8 @@ namespace RayTracer
 
         private List<Vector3> vertices;
         private List<Vector3> normals;
+
+        private List<TextureCoord> textures;
 
         private Vector3 boundMin;
         private Vector3 boundMax;
@@ -53,6 +56,7 @@ namespace RayTracer
             // Here's some code to get you started reading the file...
             this.vertices = new List<Vector3>();
             this.normals = new List<Vector3>();
+            this.textures = new List<TextureCoord>();
 
             foreach (string line in File.ReadLines(objFilePath))
             {
@@ -73,6 +77,12 @@ namespace RayTracer
                     normals.Add(ParseVector(line).Normalized());
                     continue;
                 }
+                // Texture line,
+                if (line.StartsWith("vt"))
+                {
+                    textures.Add(ParseTexture(line));
+                
+                }
                 // Face line, find a face's indices, then triangulate
                 if (line.StartsWith("f"))
                 {
@@ -80,6 +90,7 @@ namespace RayTracer
                     continue;
                 }
             }
+            
 
             boundMax = vertices[0];
             boundMin = vertices[0];
@@ -130,6 +141,13 @@ namespace RayTracer
             return transform.Apply(new Vector3(x, y, z));
         }
 
+        private TextureCoord ParseTexture(string line)
+        {
+            var coords = line.Split(' ');
+            double u = double.Parse(coords[1]);
+            double v =  double.Parse(coords[2]);
+            return new TextureCoord(u, v);
+        }
         private List<FaceVertex> ParseFace(string line)
         {
             List<FaceVertex> faceVertices = new List<FaceVertex>();
@@ -156,6 +174,17 @@ namespace RayTracer
             Vector3 v1 = vertices[faceVertices[0].vertexIndex - 1];
             Vector3 v2 = vertices[faceVertices[1].vertexIndex - 1];
             Vector3 v3 = vertices[faceVertices[2].vertexIndex - 1];
+
+            // Also store textures in the triangles
+            if (faceVertices[0].textureIndex.HasValue &&
+                faceVertices[1].textureIndex.HasValue &&
+                faceVertices[2].textureIndex.HasValue)
+            {
+                TextureCoord t1 = textures[faceVertices[0].textureIndex.Value - 1];
+                TextureCoord t2 = textures[faceVertices[1].textureIndex.Value - 1];
+                TextureCoord t3 = textures[faceVertices[2].textureIndex.Value - 1];
+                return new Triangle(v1, v2, v3, t1, t2, t3, material);
+            }
             return new Triangle(v1, v2, v3, material);
         }
 

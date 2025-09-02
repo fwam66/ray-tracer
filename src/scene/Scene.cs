@@ -127,7 +127,15 @@ namespace RayTracer
 
         public Color FindDiffuse(RayHit hit, PointLight light)
         {
-            Color materialDiffuseColor = hit.Material.DiffuseColor;
+            Color materialDiffuseColor;
+            if (!hit.Texture.Equals(new Color(0, 0, 0)))
+            {
+                materialDiffuseColor = hit.Texture;
+            }
+            else
+            {
+                materialDiffuseColor = hit.Material.DiffuseColor;
+            }
             Vector3 normal = hit.Normal;
             Color lightColor = light.Color;
             Vector3 lightDirection = (light.Position - hit.Position).Normalized();

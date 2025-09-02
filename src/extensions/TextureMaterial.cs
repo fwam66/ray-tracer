@@ -25,5 +25,6 @@ namespace RayTracer
             this.colorMap = colorMap;
             this.normalMap = normalMap;
         }
+        public Image ColorMap { get { return this.colorMap; } }
     }
 }

@@ -11,6 +11,8 @@ namespace RayTracer
         private double radius;
         private Material material;
 
+        private Color texture;
+
         /// <summary>
         /// Construct a sphere given its center point and a radius.
         /// </summary>
@@ -22,6 +24,7 @@ namespace RayTracer
             this.center = center;
             this.radius = radius;
             this.material = material;
+            this.texture = new Color(0, 0, 0);
         }
 
         /// <summary>
@@ -58,7 +61,7 @@ namespace RayTracer
         
             var position = ray.Origin + dist * ray.Direction;
             var normal = (position - this.center).Normalized();
-            return new RayHit(position, normal, ray.Direction, material, dist);
+            return new RayHit(position, normal, ray.Direction, material, dist, texture);
         }
 
         /// <summary>

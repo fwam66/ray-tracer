@@ -44,13 +44,13 @@ Tip: To tick, place an x between the square brackes [ ], like so: [x]
   - [ ] A.1 - Anti-aliasing
   - [ ] A.2 - Soft shadows
   - [ ] A.3 - Depth of field blur
-  - [x] A.4 - Motion blur
+  - [] A.4 - Motion blur
   - [ ] B.1 - Color texture mapping
   - [ ] B.2 - Bump or normal mapping
   - [ ] B.3 - Procedural textures
   - [ ] C.1 - Simple animation
-  - [x] C.2 - Keyframe animation
-  - [x] C.3 - Camera animation
+  - [] C.2 - Keyframe animation
+  - [] C.3 - Camera animation
 
 *Please summarise your approach(es) to stage 3 here.*
 For Stage 3.1, BVH data structure was implemented to drastically reduce the time complexity of OBJ rendering, turning an almost 15 minute render time to around 4-5 seconds. For custom cameras, simply had to change the hardcoded variables to apply the camera's transforms and take the camera's position as the origin.

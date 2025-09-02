@@ -12,6 +12,8 @@ namespace RayTracer
         private Vector3 normal;
         private Material material;
 
+        private Color texture;
+
         /// <summary>
         /// Construct an infinite plane object.
         /// </summary>
@@ -23,6 +25,7 @@ namespace RayTracer
             this.center = center;
             this.normal = normal.Normalized();
             this.material = material;
+            this.texture = new Color(0, 0, 0);
         }
 
         /// <summary>
@@ -39,7 +42,7 @@ namespace RayTracer
                 if (dist >= 0)
                 {
                     var position = ray.Origin + dist*ray.Direction;
-                    return new RayHit(position, normal, ray.Direction, material, dist);
+                    return new RayHit(position, normal, ray.Direction, material, dist, texture);
                 }
             }
             return null;
