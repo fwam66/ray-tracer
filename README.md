@@ -45,17 +45,21 @@ Tip: To tick, place an x between the square brackes [ ], like so: [x]
   - [ ] A.2 - Soft shadows
   - [ ] A.3 - Depth of field blur
   - [] A.4 - Motion blur
-  - [ ] B.1 - Color texture mapping
-  - [ ] B.2 - Bump or normal mapping
+  - [x] B.1 - Color texture mapping
+  - [x] B.2 - Bump or normal mapping
   - [ ] B.3 - Procedural textures
   - [ ] C.1 - Simple animation
   - [] C.2 - Keyframe animation
   - [] C.3 - Camera animation
 
 *Please summarise your approach(es) to stage 3 here.*
-For Stage 3.1, BVH data structure was implemented to drastically reduce the time complexity of OBJ rendering, turning an almost 15 minute render time to around 4-5 seconds. For custom cameras, simply had to change the hardcoded variables to apply the camera's transforms and take the camera's position as the origin.
+For Stage 3.1, BVH data structure was implemented to drastically reduce the time complexity of OBJ rendering, turning an almost 15 minute render time to around 4-5 seconds. For custom cameras, I changed the hardcoded camera variables and instead used the camera's transforms and position/origin to orient the camera.
 
-For Stage 3.2, I have decided to pick add-ons that are focused around animations and creating a dynamic and moving picture. 
+For Stage 3.2, I have decided to pick add-ons: B.1, B.2, B.3, that are focused around texturing and creating more realistic images. 
+
+To begin, in part B.1 - Colour Texture Mapping, my approach began with modifying the ObjModel.cs to be able to parse in the texture coordinates which maps points in the 3D world space to points in a 2D image or in my case, the texture image. In my implementation, I passed the texture coordinates to the triangle class where the Intersect() method is called by ObjModels as it made the most sense to do texture calculations only when an intersection has occured. I then interpolated these texture coordinates with the barycentric coordinates of the triangle to compute the texture coordinates at the intersection point of the ray on the triangle's surface. Using the interpolated texture coordinates, I then mapped them to pixel coordinates with use of the Math.Clamp method to ensure the coordinates are within the bounds of the image, whereby I was able to extract the colour at that specific coordinate from the provided images. With this colour, I parsed it into RayHit, so that in my render function, I can check whether or not the texture colour exists, and use that instead of the diffuse colour.
+
+Next, in part B.2 - Bump or Normal Mapping, my approach began with using the same interpolated texture coordinates calculated in part B.1. I first added a check for whether or not a NormalMap exists to resolve and potential errors. In a similar manner as part B.3, I mapped the texture coordinates to pixel coordinates of the normal map to extract the RGB pattern, ensuring to map the RGB values from [0,1] to [-1, 1] as these the values serve as a direction vector of sorts. Next I calculated the tangent and bitangent, with the former pointing in the direction of increasing u (the horizontal texture coordinate) and the latter pointing in the direction of increasing v (the vetical texture coordinate). With all the parts calculated, I computed the pertubed surface normal and replaced the geometric normal with it to be used in light and shadow calculations.
 
 ## Final scene render
 
@@ -106,7 +110,9 @@ dotnet run -- -f tests/sample_scene_2.txt -o images/sample_scene_2.png
 *You must list any references you used - add them here!*
 https://www.scratchapixel.com
 https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/operator-overloading
-https://www.tutorialspoint.com/computer_graphics/computer_graphics_keyframe_animation.htm
 https://learn.microsoft.com/en-us/dotnet/api/system.string?view=net-9.0
 http://codeplexarchive.org/project/magick
+https://learnopengl.com/Introduction
+
+
 
