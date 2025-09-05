@@ -293,6 +293,7 @@ namespace RayTracer
             if (leftHit == null && rightHit == null) return null;
             if (leftHit == null) return rightHit;
             if (rightHit == null) return leftHit;
+            
             // Return whichever hit is closer
             return leftHit.Distance < rightHit.Distance ? leftHit : rightHit;
         }

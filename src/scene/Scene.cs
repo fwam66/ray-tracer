@@ -99,30 +99,95 @@ namespace RayTracer
             float aspect = (float)outputImage.Width / (float)outputImage.Height;
             float scale = MathF.Tan(fov * 0.5f * MathF.PI / 180f);
 
-            
 
             for (int i = 0; i < outputImage.Width; i++)
-            {
                 for (int j = 0; j < outputImage.Height; j++)
                 {
-                    // 2D pixel coord to 3D ray
-                    // First, convert 2D coord to range of [-1, 1]
-                    float x_converted = (i + 0.5f) * 2 / (float)outputImage.Width - 1;
-                    float y_converted = 1 - (j + 0.5f) * 2 / (float)outputImage.Height;
+                    List<RayHit> hitList = new List<RayHit>();
+                    Color color = new Color(0, 0, 0);
 
-                    // Then, calculate x, y, z for direction from origin
-                    float x = x_converted * aspect * scale;
-                    float y = y_converted * scale;
-                    float z = 1;
+                    // Fires N * N rays for MSAA
+                    int aaMult = options.AAMultiplier;
+                    for (int sx = 0; sx < aaMult; sx++)
+                        for (int sy = 0; sy < aaMult; sy++)
+                        {
+                            // Splits each pixel into uniform sub samples
+                            float u = (sx + 0.5f) / aaMult;
+                            float v = (sy + 0.5f) / aaMult;
 
-                    // Create Ray with normalized direction vector
-                    Ray ray = new Ray(origin, camera.Transform.Rotation.Rotate(new Vector3(x, y, z)).Normalized());
+                            // 2D pixel coord to 3D ray
+                            // First, convert 2D coord to range of [-1, 1]
+                            float x_converted = (i + u) * 2 / (float)outputImage.Width - 1;
+                            float y_converted = 1 - (j + v) * 2 / (float)outputImage.Height;
 
-                    // Find color for each pixel
-                    Color color = Trace(ray, 5);
+                            // Then, calculate x, y, z for direction from origin
+                            float x = x_converted * aspect * scale;
+                            float y = y_converted * scale;
+                            float z = 1.0f;
+
+                            // Create Ray with normalized direction vector
+                            Ray ray = new Ray(origin, camera.Transform.Rotation.Rotate(new Vector3(x, y, z)).Normalized());
+
+                            // Determine if there were any intersections
+                            var hit = FindNearestHit(ray);
+                            if (hit == null) hitList.Add(null);
+                            else hitList.Add(hit);
+                        }
+
+                    // See if all hits are same
+                    bool allSame = true;
+                    RayHit firstHit = null;
+                    // Remove null-hits from the list
+                    hitList.RemoveAll(hit => hit == null);
+                    // If list now empty means no intersection, just set pixel as Black
+                    if (hitList.Count == 0)
+                    {
+                        outputImage.SetPixel(i, j, color);
+                        continue;
+                    }
+                    firstHit = hitList[0];
+
+                    // Else check if all hits are the same
+                    foreach (var hit in hitList)
+                    {
+                        if (hit == null || Color.isSame(hit.Material.DiffuseColor, firstHit.Material.DiffuseColor))
+                        {
+                            allSame = false;
+                            break;
+                        }
+                    }
+                       
+                    // If all hits are the same, calculate the color at center of entity
+                    if (allSame)
+                    {
+                        // 2D pixel coord to 3D ray
+                        // First, convert 2D coord to range of [-1, 1]
+                        float x_converted = (i + 0.5f) * 2 / (float)outputImage.Width - 1;
+                        float y_converted = 1 - (j + 0.5f) * 2 / (float)outputImage.Height;
+
+                        // Then, calculate x, y, z for direction from origin
+                        float x = x_converted * aspect * scale;
+                        float y = y_converted * scale;
+                        float z = 1.0f;
+
+                        // Create Ray with normalized direction vector
+                        Ray ray = new Ray(origin, camera.Transform.Rotation.Rotate(new Vector3(x, y, z)).Normalized());
+
+                        // Find color
+                        color = Trace(ray, 5);
+                    }
+                    // Else, find color for each sample and average them out
+                    else
+                    {
+                        foreach (RayHit hit in hitList)
+                        {
+                            Ray ray = new Ray(origin, hit.Incident);
+                            color += Trace(ray, 5);
+                        }
+                        color /= (aaMult * aaMult);
+                    }
                     outputImage.SetPixel(i, j, color);
                 }
-            }
         }
 
         public Color FindDiffuse(RayHit hit, PointLight light)

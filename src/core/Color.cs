@@ -1,4 +1,5 @@
 using System;
+using ImageMagick.Colors;
 
 namespace RayTracer
 {
@@ -100,6 +101,12 @@ namespace RayTracer
         public static Color operator +(Color a, Color b)
         {
             return new Color(a.r + b.r, a.g + b.g, a.b + b.b);
+        }
+
+        // Checks if two Colors are the same
+        public static bool isSame(Color a, Color b)
+        {
+            return (a.R.Equals(b.R) && a.B.Equals(b.B) && a.G.Equals(b.G));
         }
     }
 }

@@ -14,7 +14,7 @@ ObjModel "Box1" "tests/models/box.obj" (-0.3, -0.4, 2) (0, 0, 1) 30 0.3 "BoxMat"
 ObjModel "Box2" "tests/models/box.obj" (0.1, 0.4, 2) (0, 1, 0) 15 0.2 "BoxMat"
 ObjModel "Box3" "tests/models/box.obj" (0.4, -0.3, 2) (1, 0, 0) 50 0.15 "BoxMat"
 
-Plane "Floor" (0, -1, 0) (0, 1, 0) "GreyMat"
+Plane "Floor" (0, -1, 0) (0, 1, 0) "FloorMat"
 Plane "Roof" (0, 1, 0) (0, -1, 0) "GreyMat"
 
 Triangle "LeftWallA" (-1, -1, 0) (-1, 1, 0) (-1, 1, 3) "RedMat"
