@@ -40,7 +40,7 @@ Tip: To tick, place an x between the square brackes [ ], like so: [x]
 ##### Stage 3
 
 - [x] Stage 3.1 - Advanced features
-- [ ] Stage 3.2 - Advanced add-ons
+- [x] Stage 3.2 - Advanced add-ons
   - [x] A.1 - Anti-aliasing
   - [ ] A.2 - Soft shadows
   - [ ] A.3 - Depth of field blur
