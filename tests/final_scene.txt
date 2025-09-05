@@ -1,1 +1,27 @@
+Camera (1.475, 1.3, 0.575) (0.775, -1.025, 0.4) 45 1
 
+Material "BlueMat" (0, 0, 0) (.5, .5, 1) (0, 0, 0) 0 0 0 1
+Material "GreenMat" (0, 0, 0) (.5, 1, .5) (0, 0, 0) 0 0 0 1
+Material "RedMat" (0, 0, 0) (1, .5, .5) (0, 0, 0) 0 0 0 1
+Material "GreyMat" (0, 0, 0) (.5, .5, .5) (0, 0, 0) 0 0 0 1
+TextureMaterial "BunnyMat" "tests/textures/bunny-tex.jpg" "NULL"
+TextureMaterial "BoxMat" "tests/textures/box-tex.png" "tests/textures/box-normal.png"
+
+PointLight "Light1" (0, 0.8, 2) (.25, .25, .25)
+PointLight "Light2" (-0.2, 1.8, 0.8) (.5, .5, .5)
+
+Triangle "FarWallA" (-1, -1.55, 3) (-1, 1.55, 3) (2, 1.55, 3) "BlueMat"
+Triangle "FarWallB" (-1, -1.55, 3) (2, 1.55, 3) (2, -1.55, 3) "BlueMat"
+
+Triangle "LeftWallA" (-1, -1.55, 0) (-1, 1.55, 0) (-1, 1.55, 3) "RedMat"
+Triangle "LeftWallB" (-1, -1.55, 0) (-1, 1.55, 3) (-1, -1.55, 3)  "RedMat"
+
+Triangle "RightWallA" (1.5, -1.1, 3) (-1, 0.25, 2) (-1, 0.25, 3)  "GreenMat"
+Triangle "RightWallB" (1.5, -1.1, 3) (1.5, -1.1, 2) (-1, 0.25, 2)  "GreenMat"
+
+Plane "Floor" (0, -1, 0) (0, 1, 0) "GreyMat"
+
+ObjModel "Bunny" "tests/models/bunny-tex.obj" (-0.1, -0.235, 2.45) (0.2, 1, 0) 180 3 "BunnyMat"
+ObjModel "Box1" "tests/models/box.obj" (-0.3, 0, 1.25) (1, 1, 1) 45 0.125 "BoxMat"
+ObjModel "Box2" "tests/models/box.obj" (-0.1, -0.5, 1.5) (1, 1, 1) 20 0.175 "BoxMat"
+ObjModel "Box3" "tests/models/box.obj" (-0.2, 0.4, 1.6) (1, 1, 1) 27 0.1 "BoxMat"

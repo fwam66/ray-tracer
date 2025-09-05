@@ -70,12 +70,12 @@ shows up here.
 
 ![My final render](images/final_scene.png)
 
-This render took **x** minutes and **y** seconds on my PC.
+This render took 1 minutes and 19 seconds on my PC.
 
 I used the following command to render the image exactly as shown:
 
 ```
-dotnet run -- (... your command line args)
+dotnet run -- -f tests/final_scene.txt -o output.png -x 4
 ```
 
 ## Sample outputs
