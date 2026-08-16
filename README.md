@@ -1,17 +1,6 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/oMRiv2DB)
 # COMP30019 - Project 1 - Ray Tracer
 
-This is your README.md... you should write anything relevant to your
-implementation here.
-
-Please ensure your student details are specified below (*exactly* as on UniMelb
-records):
-
-**Name:** Ling Wei Teh \
-**Student Number:** 1462878 \
-**Username:** lingweit \
-**Email:** lingweit@student.unimelb.edu.au
-
 ## Completed stages
 
 Tick the stages bellow that you have completed so we know what to mark (by
